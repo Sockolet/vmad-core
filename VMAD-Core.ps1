@@ -1,16 +1,16 @@
 ﻿# 2019 Adrian Rey based on:
 # >>> Matthew Fugel (matthewfugel.wordpress.com) and
 # >>> Andy Syrewicze (https://www.altaro.com/hyper-v/powershell-script-deploy-vms-configure-guest-os-one-go/) work
-# VM auto-deployment script
+# VM auto-deployment script 1.0 - 10/2019
 
 Write-Host "Welcome to the VM auto-deployment script. `n" -ForegroundColor Green
 
 # Switch to choose DC or Client machine
-do { Write-Host "What would you like to deploy? `n" -ForegroundColor Yellow
+    Write-Host "What would you like to deploy? `n" -ForegroundColor Yellow
     Write-Host "Choose [1] for a Domain Controller" -ForegroundColor Yellow
     Write-Host "Choose [2] for a Client machine `n" -ForegroundColor Yellow
-    $dccl = Read-Host "Please choose an option"
-} while ($dccl -lt 1 -or $dccl -gt 2)
+    do { $dccl = Read-Host "Please choose an option"
+    } while ($dccl -lt 1 -or $dccl -gt 2)
 
 # If it is a DC set $DC=1. If it is a Client, set $DC=0.
 switch ($dccl){
@@ -33,10 +33,33 @@ if ($dc -eq 1 ){
     # If the user wants to create it, ask for a new name
     else {
         $pdc = 1
-        $DomainName = Read-Host "Please, enter a domain name to create it" 
-        Write-Host "This machine will be the first Domain Controller in a new Forest" -ForegroundColor Red -BackgroundColor Yellow } }
+        $DomainName = Read-Host "Please, enter a domain name to create it"
+        Write-Host "This machine will be the first Domain Controller in a new Forest `n" -ForegroundColor Red -BackgroundColor Yellow
+        Write-Host "Now, select the desired Domain/Forest functional level"
+        Write-Host "Choose [2] for a Windows Server 2003" -ForegroundColor Yellow
+        Write-Host "Choose [3] for a Windows Server 2008" -ForegroundColor Yellow
+        Write-Host "Choose [4] for a Windows Server 2008 R2" -ForegroundColor Yellow
+        Write-Host "Choose [5] for a Windows Server 2012" -ForegroundColor Yellow
+        Write-Host "Choose [6] for a Windows Server 2012 R2" -ForegroundColor Yellow
+        Write-Host "Choose [7] for a Windows Server 2016 / 2019" -ForegroundColor Yellow
+        do {
+        $FL = Read-Host "Please choose an option" } while ($FL -lt 2 -or $FL -gt 7)
+        Write-Host "`n"
+        }
 
-# Client part (not a Domain Controller). 
+switch ($version) {
+1 {$templatePath = "D:\Hyper-V\UNATTENDED\u2012r2.vhdx"
+    $OS = "Windows Server 2012 R2"}
+2 {$templatePath = "D:\Hyper-V\UNATTENDED\u2016.vhdx"
+    $OS = "Windows Server 2016"}
+3 {$templatePath = "D:\Hyper-V\UNATTENDED\u2019.vhdx"
+    $OS = "Windows Server 2019"}
+4 {$templatePath = "D:\Hyper-V\UNATTENDED\u1809.vhdx"
+    $OS = "Windows 10 - 1809"}
+5 {$templatePath = "D:\Hyper-V\UNATTENDED\u1903.vhdx"
+    $OS = "Windows 10 - 1903"} }}
+
+# Client part (not a Domain Controller).
 else {
 
     # Ask if there is a domain in the environment
@@ -57,24 +80,22 @@ Write-Host "Please, choose the OS version: `n" -ForegroundColor Yellow
 
 # Switch to set the parent path by the OS version
 if ($dc -eq 1){
-    do { 
         Write-Host -NoNewLine "Select [1] for Windows Server 2012 R2  " -ForegroundColor Yellow
         Write-Host "--> NOTE: WS 2012 R2 CAN'T BE AUTO-MANAGED" -ForegroundColor Red -BackgroundColor Yellow
         Write-Host "Select [2] for Windows Server 2016" -ForegroundColor Yellow
         Write-Host "Select [3] for Windows Server 2019" -ForegroundColor Yellow
-        $version = Read-Host "Please choose an option between 1 and 3"
-    } while ($version -lt 1 -or $version -gt 3) }
+        do { $version = Read-Host "Please choose an option between 1 and 3"
+        } while ($version -lt 1 -or $version -gt 3) }
 
 else{
-    do { 
         Write-Host -NoNewLine "Select [1] for Windows Server 2012 R2  " -ForegroundColor Yellow
         Write-Host "--> NOTE: WS 2012 R2 CAN'T BE AUTO-MANAGED" -ForegroundColor Red -BackgroundColor Yellow
         Write-Host "Select [2] for Windows Server 2016" -ForegroundColor Yellow
         Write-Host "Select [3] for Windows Server 2019" -ForegroundColor Yellow
         Write-Host "Select [4] for Windows 10 - 1809" -ForegroundColor Yellow
         Write-Host "Select [5] for Windows 10 - 1903 `n" -ForegroundColor Yellow
-        $version = Read-Host "Please choose an option between 1 and 5"
-    } while ($version -lt 1 -or $version -gt 5) }
+        do { $version = Read-Host "Please choose an option between 1 and 5"
+        } while ($version -lt 1 -or $version -gt 5) }
 
 # Unattended parent routes (modify if necessary)
 switch ($version) {
@@ -188,7 +209,7 @@ if ($version -eq 1){
 # If it is another OS, proceed with the configuration
 else {
 	# After the inital provisioning, we wait until PowerShell Direct is functional and working within the guest VM before moving on.
-    # Big thanks to Ben Armstrong for the below useful Wait code 
+    # Big thanks to Ben Armstrong for the below useful Wait code
     Write-Verbose “Waiting for PowerShell Direct to start on VM [$VMName]” -Verbose
        while ((icm -VMName $VMName -Credential $LocalCredential {“Test”} -ea SilentlyContinue) -ne “Test”) {Sleep -Seconds 1}
 
@@ -201,43 +222,41 @@ else {
         New-NetIPAddress -IPAddress "$IP" -InterfaceAlias "Ethernet" -PrefixLength "$SubMaskBit" | Out-Null
         Set-DnsClientServerAddress -InterfaceAlias “Ethernet” -Addresses $DNS
         $DCEffectiveIP = Get-NetIPAddress -InterfaceAlias "Ethernet" | Select-Object IPAddress
-        Write-Verbose "Assigned IPv4 and IPv6 IPs for VM [$VMName] are as follows" -Verbose 
+        Write-Verbose "Assigned IPv4 and IPv6 IPs for VM [$VMName] are as follows" -Verbose
         Write-Host $DCEffectiveIP | Format-List
         Write-Verbose "Updating Hostname for VM [$VMName]" -Verbose
         Rename-Computer -NewName $ComputerName
         } -ArgumentList $VMName, $IP, $SubMaskBit, $DFGW, $DNS, $ComputerName
-	
+
 	Write-Verbose "Rebooting VM [$VMName] to apply changes" -Verbose
 	Stop-VM -Name $VMName
-	Start-VM -Name $VMName	
-		
+	Start-VM -Name $VMName
+
 	# After the inital provisioning, we wait until PowerShell Direct is functional and working within the guest VM before moving on.
-    # Big thanks to Ben Armstrong for the below useful Wait code 
+    # Big thanks to Ben Armstrong for the below useful Wait code
     Write-Verbose “Waiting for PowerShell Direct to start on VM [$VMName]” -Verbose
        while ((icm -VMName $VMName -Credential $LocalCredential {“Test”} -ea SilentlyContinue) -ne “Test”) {Sleep -Seconds 1}
 
     Write-Verbose "PowerShell Direct responding on VM [$VMName]. Moving On...." -Verbose
-	
+
 #DC configuration in an new forest
 if ($pdc -eq 1 -and $version -gt 1 -and $version -lt 4) {
-    
+
     # Set domain and forest FL if has to, also set the DSRM password for a new forest.
-    $DomainMode = "7"; # Domain Functional level for 2016 and 2019
-    $ForestMode = "7"; # Forest Functional level for 2016 and 2019
     $DSRMPWord = ConvertTo-SecureString -String "Pa`$`$w0rd" -AsPlainText -Force # DSRM Password for the new forest
 
     # Next we'll proceed by installing the Active Directory Role and then configuring the machine as a new DC in a new AD Forest
     Invoke-Command -VMName $VMName -Credential $LocalCredential -ScriptBlock {
-        param ($VMName, $DomainMode, $ForestMode, $DomainName, $DSRMPWord) 
+        param ($VMName, $FL, $DomainName, $DomainTag, $DSRMPWord)
         Write-Verbose "Installing Active Directory Services on VM [$VMName]" -Verbose
         Install-WindowsFeature -Name "AD-Domain-Services" -IncludeManagementTools
         Write-Verbose "Configuring New Domain with Name [$DomainName] on VM [$VMName]" -Verbose
-        Install-ADDSForest -ForestMode $ForestMode -DomainMode $DomainMode -DomainName $DomainName -InstallDns -CreateDnsDelegation:$false -NoDNSonNetwork -SafeModeAdministratorPassword $DSRMPWord -Force -NoRebootOnCompletion
-        } -ArgumentList $VMName, $DomainMode, $ForestMode, $DomainName, $DSRMPWord 
-		
-	Write-Verbose "Rebooting VM [$VMName] to complete installation of the new client machine" -Verbose
+        Install-ADDSForest -ForestMode $FL -DomainMode $FL -DomainName $DomainName -DomainNetbiosName $DomainTag -InstallDns -CreateDnsDelegation:$false -NoDNSonNetwork -SafeModeAdministratorPassword $DSRMPWord -Force -NoRebootOnCompletion
+        } -ArgumentList $VMName, $FL, $DomainName, $DomainTag, $DSRMPWord
+
+	Write-Verbose "Rebooting VM [$VMName] to complete installation of the new forest" -Verbose
 	Stop-VM -Name $VMName
-	Start-VM -Name $VMName	
+	Start-VM -Name $VMName
 		}
 
 #DC configuration in an existing forest
@@ -251,8 +270,8 @@ elseif ($pdc -eq 0 -and $dc -eq 1 -and $version -lt 4) {
         Write-Verbose "Joining VM [$VMName] to Domain [$DomainName]" -Verbose
         Install-ADDSDomainController -InstallDns -Credential $DomainCredential -DomainName $DomainName -Force -NoRebootOnCompletion -SafeModeAdministratorPassword $DSRMPWord
         } -ArgumentList $VMName, $DomainCredential, $DomainName, $DSRMPWord
-	
-	Write-Verbose "Rebooting VM [$VMName] to complete installation of the new client machine" -Verbose
+
+	Write-Verbose "Rebooting VM [$VMName] to complete installation of the new DC" -Verbose
 	Stop-VM -Name $VMName
 	Start-VM -Name $VMName	}
 
@@ -261,11 +280,11 @@ elseif ($dc -eq 0 -and $workgroup -eq 0) {
 
     # Next we'll proceed by joining the client to the domain
     Invoke-Command -VMName $VMName -Credential $LocalCredential -ScriptBlock {
-        param ($VMName, $ComputerName, $LocalCredential, $DomainName, $DomainCredential) 
+        param ($VMName, $ComputerName, $LocalCredential, $DomainName, $DomainCredential)
         Write-Verbose "Joining VM [$VMName] to Domain [$DomainName]" -Verbose
         Add-Computer -ComputerName $ComputerName -LocalCredential $LocalCredential -DomainName $DomainName -Credential $DomainCredential -Force
-        } -ArgumentList $VMName, $ComputerName, $LocalCredential, $DomainName, $DomainCredential 
-		
+        } -ArgumentList $VMName, $ComputerName, $LocalCredential, $DomainName, $DomainCredential
+
 	Write-Verbose "Rebooting VM [$VMName] to complete installation of the new client machine" -Verbose
 	Stop-VM -Name $VMName
 	Start-VM -Name $VMName	}
@@ -278,20 +297,20 @@ if ($workgroup -ne 1) {
 	Write-Verbose "PowerShell Direct responding on VM [$VMName]. Moving On...." -Verbose
 	Write-Verbose "Disabling Firewall and Lockscreen..." -Verbose
 
-    # Disabling all firewall settings.
-    # Also disabling lockscreen
-    Invoke-Command -VMName $VMName -Credential $DomainCredential -ScriptBlock {
-    Set-NetFirewallProfile -Profile * -Enabled False | Out-Null 
+  # Disabling all firewall settings.
+  # Also disabling lockscreen
+  Invoke-Command -VMName $VMName -Credential $DomainCredential -ScriptBlock {
+    Set-NetFirewallProfile -Profile * -Enabled False | Out-Null
     New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization –Force | Out-Null # This line and the next one disable the lockscreen
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization -Name NoLockScreen -PropertyType DWord -Value 1 –Force | Out-Null
-	if ($dc -eq 1) {
-	Set-ADUser -Identity $User -PasswordNeverExpires:$true
-	Set-LocalUser -Name $User -PasswordNeverExpires:$true	}
-	else {
-	$DomainGroup = "Domain Users"
-	$LocalGroup  = "Remote Desktop Users"
-	$Computer    = $env:computername
-	$Domain      = $env:userdomain
+	  if ($dc -eq 1) {
+	     Set-ADUser -Identity $User -PasswordNeverExpires:$true
+	     Set-LocalUser -Name $User -PasswordNeverExpires:$true	}
+	  else {
+	     $DomainGroup = "Domain Users"
+	     $LocalGroup  = "Remote Desktop Users"
+	     $Computer    = $env:computername
+	     $Domain      = $env:userdomain
 	([ADSI]"WinNT://$Computer/$LocalGroup,group").psbase.Invoke("Add",([ADSI]"WinNT://$Domain/$DomainGroup").path)
 	Set-LocalUser -Name $using:User -PasswordNeverExpires:$true }
     Write-Verbose "VM deploy completed!!!!" -Verbose } -ArgumentList $VMName, $DomainCredential, $User }
@@ -305,10 +324,10 @@ else {
 	Write-Verbose "Disabling Firewall and Lockscreen..." -Verbose
 
 	Invoke-Command -VMName $VMName -Credential $LocalCredential -ScriptBlock {
-    Set-NetFirewallProfile -Profile * -Enabled False | Out-Null 
+    Set-NetFirewallProfile -Profile * -Enabled False | Out-Null
     New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization –Force | Out-Null # This line and the next one disable the lockscreen
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization -Name NoLockScreen -PropertyType DWord -Value 1 –Force | Out-Null
     Set-LocalUser -Name $using:User -PasswordNeverExpires:$true } -ArgumentList $VMName, $LocalCredential
-	
+
 Write-Verbose "VM deploy completed!!!!" -Verbose }
 # End script
