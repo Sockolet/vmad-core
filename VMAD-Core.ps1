@@ -47,18 +47,6 @@ if ($dc -eq 1 ){
         Write-Host "`n"
         }
 
-switch ($version) {
-1 {$templatePath = "D:\Hyper-V\UNATTENDED\u2012r2.vhdx"
-    $OS = "Windows Server 2012 R2"}
-2 {$templatePath = "D:\Hyper-V\UNATTENDED\u2016.vhdx"
-    $OS = "Windows Server 2016"}
-3 {$templatePath = "D:\Hyper-V\UNATTENDED\u2019.vhdx"
-    $OS = "Windows Server 2019"}
-4 {$templatePath = "D:\Hyper-V\UNATTENDED\u1809.vhdx"
-    $OS = "Windows 10 - 1809"}
-5 {$templatePath = "D:\Hyper-V\UNATTENDED\u1903.vhdx"
-    $OS = "Windows 10 - 1903"} }}
-
 # Client part (not a Domain Controller).
 else {
 
@@ -111,7 +99,7 @@ switch ($version) {
     $OS = "Windows 10 - 1903"} }
 
 # Tell user what option he has chosen
-Write-Host "Your have chosen" $OS "version for your Virtual Machine `n" -ForegroundColor Green
+Write-Host "You have chosen" $OS "version for your Virtual Machine `n" -ForegroundColor Green
 
 # Starting to set VM variables
 $VMFolderPath = "D:\Hyper-V\Script-Machines" # D:\Hyper-V\Script-Machines by default,
