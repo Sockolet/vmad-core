@@ -46,6 +46,7 @@ if ($dc -eq 1 ){
         $FL = Read-Host "Please choose an option" } while ($FL -lt 2 -or $FL -gt 7)
         Write-Host "`n"
         }
+      }
 
 # Client part (not a Domain Controller).
 else {
