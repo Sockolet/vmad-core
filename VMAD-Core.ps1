@@ -251,6 +251,8 @@ if ($pdc -eq 1 -and $version -gt 1 -and $version -lt 4) {
 #DC configuration in an existing forest
 elseif ($pdc -eq 0 -and $dc -eq 1 -and $version -lt 4) {
 
+    $DSRMPWord = ConvertTo-SecureString -String "Pa`$`$w0rd" -AsPlainText -Force # DSRM Password for the new forest
+
     # Next we'll proceed by installing the Active Directory Role and then configuring the machine as a new DC in an existing AD Forest
     Invoke-Command -VMName $VMName -Credential $LocalCredential -ScriptBlock {
         param ($VMName, $DomainCredential, $DomainName, $DSRMPWord)
